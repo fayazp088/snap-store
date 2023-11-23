@@ -1,56 +1,37 @@
 {{define "header"}}
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet" />
-
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        display: flex;
-        flex-direction: column;
-      }
-
-      main {
-        flex: 1;
-      }
-    </style>
   </head>
 
-  <header class="bg-blue-500 p-4 text-white">
-    <div class="container mx-auto flex justify-between items-center">
-      <div class="text-2xl font-bold">SnapStore</div>
-      <nav class="space-x-4">
-        <a href="/" class="hover:text-gray-300">Home</a>
-        <a href="/contact" class="hover:text-gray-300">Contact</a>
-        <a href="/faq" class="hover:text-gray-300">Faq</a>
-      </nav>
-      <div class="flex items-center space-x-4">
-        <a href="/" class="hover:text-gray-300">Login</a>
-        <a href="#" class="bg-white text-blue-500 hover:bg-gray-200 py-2 px-4 rounded-full"
-          >Sign Up</a
-        >
+  <body class="bg-gray-100 flex flex-col min-h-screen">
+    <header class="bg-blue-500 p-4 text-white">
+      <div class="container mx-auto flex justify-between items-center">
+        <div class="text-2xl font-bold">SnapStore</div>
+        <nav class="space-x-4">
+          <a href="/" class="hover:text-gray-300">Home</a>
+          <a href="/contact" class="hover:text-gray-300">Contact</a>
+          <a href="/faq" class="hover:text-gray-300">Faq</a>
+        </nav>
+        <div class="flex items-center space-x-4">
+          <a href="/login" class="hover:text-gray-300">Login</a>
+          <a href="/signup" class="bg-white text-blue-500 hover:bg-gray-200 py-2 px-4 rounded-full"
+            >Sign Up</a
+          >
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  {{
-    end
-  }}
-
-  {{define "footer"}}
-  <footer class="bg-blue-500 p-4 text-white mt-auto">
-    <div class="container mx-auto text-center">
-      <p>&copy; 2023 Your Website. All rights reserved.</p>
-    </div>
-  </footer>
+    {{ end }}
+    {{define "footer"}}
+    <footer class="bg-blue-500 p-4 text-white mt-auto">
+      <div class="container mx-auto text-center">
+        <p>&copy; 2023 Your Website. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
 </html>
 {{ end }}
