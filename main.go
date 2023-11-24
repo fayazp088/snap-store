@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/fayazp088/snap-store/controllers"
+	"github.com/fayazp088/snap-store/models"
 	"github.com/fayazp088/snap-store/templates"
 	"github.com/fayazp088/snap-store/views"
 	"github.com/go-chi/chi/v5"
@@ -17,6 +18,18 @@ type User struct {
 
 func main() {
 	r := chi.NewRouter()
+	cfg := models.DefaultPostgresConfig()
+
+	db, err := models.Open(cfg)
+
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	userService := models.UserService{
+		DB: db,
+	}
 
 	homeTpl := views.Must(views.ParseFs(
 		templates.FS,
@@ -34,14 +47,17 @@ func main() {
 	r.Get("/faq", controllers.FAQ(faqTpl))
 
 	//Users
-	var userC controllers.Users
+	userC := controllers.Users{
+		UserService: &userService,
+	}
 
-	userC.Template = views.Must(views.ParseFs(templates.FS, "signup.gohtml", "tailwind.gohtml"))
+	userC.Templates.New = views.Must(views.ParseFs(templates.FS, "signup.gohtml", "tailwind.gohtml"))
 	r.Get("/signup", userC.New)
 	r.Post("/signup", userC.Create)
 
-	loginTpl := views.Must(views.ParseFs(templates.FS, "login.gohtml", "tailwind.gohtml"))
-	r.Get("/login", controllers.StaticHandler(loginTpl))
+	userC.Templates.SignIn = views.Must(views.ParseFs(templates.FS, "login.gohtml", "tailwind.gohtml"))
+	r.Get("/login", userC.SingIn)
+	r.Post("/login", userC.ProcessSignIn)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
