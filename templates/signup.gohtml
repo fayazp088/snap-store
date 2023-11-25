@@ -5,6 +5,9 @@
 
     <!-- Signup Form -->
     <form class="text-left" action="/signup" method="post">
+      <div class="hidden">
+        {{ csrfField }}
+      </div>
       <div class="mb-4">
         <label for="email" class="block text-gray-600 text-sm font-medium mb-2">Email</label>
         <input

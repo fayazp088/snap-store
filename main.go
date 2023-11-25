@@ -8,6 +8,7 @@ import (
 	"github.com/fayazp088/snap-store/templates"
 	"github.com/fayazp088/snap-store/views"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/csrf"
 )
 
 type User struct {
@@ -30,6 +31,12 @@ func main() {
 	userService := models.UserService{
 		DB: db,
 	}
+
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		csrf.Secure(false),
+	)
 
 	homeTpl := views.Must(views.ParseFs(
 		templates.FS,
@@ -59,9 +66,11 @@ func main() {
 	r.Get("/login", userC.SingIn)
 	r.Post("/login", userC.ProcessSignIn)
 
+	r.Get("/user/me", userC.CurrentUser)
+
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
 
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":3000", csrfMw(r))
 }
