@@ -12,7 +12,8 @@ type Users struct {
 		New    Template
 		SignIn Template
 	}
-	UserService *models.UserService
+	UserService    *models.UserService
+	SessionService *models.SessionService
 }
 
 func (u Users) New(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +52,17 @@ func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "User Created: %v", user)
+	session, err := u.SessionService.Create(user.ID)
+
+	if err != nil {
+		fmt.Println(err)
+		// TODO: Long term, we should show a warning about not being able to sign the u
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	}
+
+	setCookie(w, CookieSession, session.Token)
+	http.Redirect(w, r, "/user/me", http.StatusFound)
 }
 
 func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
@@ -72,24 +83,34 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := http.Cookie{
-		Name:     "email",
-		Value:    user.Email,
-		Path:     "/",
-		HttpOnly: true,
+	session, err := u.SessionService.Create(user.ID)
+
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
 	}
 
-	http.SetCookie(w, &cookie)
+	setCookie(w, CookieSession, session.Token)
 	fmt.Fprintf(w, "User Data: %v", user)
 }
 
 func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	email, err := r.Cookie("email")
+	token, err := readCookie(r, CookieSession)
 
 	if err != nil {
-		http.Error(w, "current user: %w", http.StatusInternalServerError)
+		fmt.Println(err)
+		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
 
-	fmt.Fprintf(w, "Current User: %v", email)
+	user, err := u.SessionService.User(token)
+
+	if err != nil {
+		fmt.Println(err)
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	}
+
+	fmt.Fprintf(w, "Current User: %v", user.Email)
 }

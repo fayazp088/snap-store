@@ -31,6 +31,9 @@ func main() {
 	userService := models.UserService{
 		DB: db,
 	}
+	sessionService := models.SessionService{
+		DB: db,
+	}
 
 	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
 	csrfMw := csrf.Protect(
@@ -55,7 +58,8 @@ func main() {
 
 	//Users
 	userC := controllers.Users{
-		UserService: &userService,
+		UserService:    &userService,
+		SessionService: &sessionService,
 	}
 
 	userC.Templates.New = views.Must(views.ParseFs(templates.FS, "signup.gohtml", "tailwind.gohtml"))
