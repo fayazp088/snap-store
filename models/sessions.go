@@ -1,7 +1,9 @@
 package models
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/fayazp088/snap-store/rand"
@@ -38,15 +40,79 @@ func (ss SessionService) Create(userID int) (*Session, error) {
 	}
 
 	session := Session{
-		UserID: userID,
-		Token:  token,
+		UserID:    userID,
+		Token:     token,
+		TokenHash: ss.hash(token),
 	}
-	// TODO: Create the session token
-	// TODO: Implement SessionService.Create
+
+	row := ss.DB.QueryRow(`
+                 UPDATE sessions
+                 SET token_hash = $2
+                 WHERE user_id = $1
+     RETURNING id;`, session.UserID, session.TokenHash)
+
+	err = row.Scan(&session.ID)
+
+	if err == sql.ErrNoRows {
+		row = ss.DB.QueryRow(`
+        INSERT INTO sessions (user_id, token_hash)
+        VALUES ($1, $2)
+        RETURNING id;`, session.UserID, session.TokenHash)
+		err = row.Scan(&session.ID)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("create: %w", err)
+	}
+
 	return &session, nil
 }
 
 func (ss *SessionService) User(token string) (*User, error) {
-	// TODO: Implement SessionService.User
-	return nil, nil
+	// 1. Hash the session token
+	// 2. Query for the session with that hash
+	// 3. Using the UserID from the session, we need to query for that user // 4. Return the user
+	tokenHash := ss.hash(token)
+	var user User
+
+	row := ss.DB.QueryRow(`
+        SELECT user_id
+        FROM sessions
+        WHERE token_hash = $1;`, tokenHash)
+	err := row.Scan(&user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("user: %w", err)
+	}
+
+	row = ss.DB.QueryRow(`
+		SELECT  email, password_hash
+		FROM users
+		where id = $1
+	`, user.ID)
+
+	err = row.Scan(&user.Email, &user.PasswordHash)
+
+	if err != nil {
+		return nil, fmt.Errorf("[session service] user: %w", err)
+	}
+
+	return &user, nil
+}
+
+func (ss *SessionService) hash(token string) string {
+	tokenHash := sha256.Sum256([]byte(token))
+	// base64 encode the data into a string
+	return base64.URLEncoding.EncodeToString(tokenHash[:])
+}
+
+func (ss *SessionService) Delete(token string) error {
+	tokenHash := ss.hash(token)
+
+	_, err := ss.DB.Exec(`
+                DELETE FROM sessions
+                WHERE token_hash = $1;`, tokenHash)
+	if err != nil {
+		return fmt.Errorf("delete: %w", err)
+
+	}
+	return nil
 }

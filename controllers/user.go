@@ -56,8 +56,7 @@ func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println(err)
-		// TODO: Long term, we should show a warning about not being able to sign the u
-		http.Redirect(w, r, "/signin", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 
@@ -100,7 +99,7 @@ func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println(err)
-		http.Redirect(w, r, "/signin", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 
@@ -108,9 +107,27 @@ func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println(err)
-		http.Redirect(w, r, "/signin", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 
 	fmt.Fprintf(w, "Current User: %v", user.Email)
+}
+
+func (u Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
+	token, err := readCookie(r, CookieSession)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+	err = u.SessionService.Delete(token)
+
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
+	}
+
+	deleteCookie(w, CookieSession)
+	http.Redirect(w, r, "/login", http.StatusFound)
 }

@@ -18,6 +18,12 @@
         </nav>
         <div class="flex items-center space-x-4">
           <a href="/login" class="hover:text-gray-300">Login</a>
+          <form action="/logout" method="post">
+            <div class="hidden">
+              {{ csrfField }}
+            </div>
+            <button type="submit" class="hover:text-gray-300">Logout</button>
+          </form>
           <a href="/signup" class="bg-white text-blue-500 hover:bg-gray-200 py-2 px-4 rounded-full"
             >Sign Up</a
           >
